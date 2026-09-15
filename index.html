@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Repaso Cap 1 - v2 (auto)</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:linear-gradient(160deg,#0f2a5c 0%,#16407f 100%); min-height:100vh; color:#16233d; }
+  .wrap { max-width:480px; margin:0 auto; padding:18px 14px 40px; }
+  .card { background:#fff; border-radius:18px; padding:20px 18px; box-shadow:0 8px 24px rgba(0,0,0,0.25); margin-bottom:14px; }
+  h1 { color:#fff; font-size:24px; text-align:center; margin:6px 0 2px; }
+  .subtitle { color:#cfe0ff; text-align:center; font-size:14px; margin-bottom:18px; }
+  .progress-bar { background:rgba(255,255,255,0.25); border-radius:20px; height:10px; overflow:hidden; margin-bottom:18px; }
+  .progress-fill { background:#4cd97b; height:100%; width:0%; transition:width .3s ease; }
+  .q-label { font-size:12px; font-weight:700; color:#7a8aa8; letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px; }
+  .q-text { font-size:19px; font-weight:700; line-height:1.35; margin-bottom:16px; color:#16233d; }
+  .opt { display:block; width:100%; text-align:left; background:#f2f5fb; border:2px solid #e1e7f2;
+    border-radius:14px; padding:14px 16px; font-size:16px; margin-bottom:10px; cursor:pointer; color:#16233d; }
+  .opt.correct { background:#d6f5df; border-color:#4cd97b; font-weight:700; }
+  .opt.wrong { background:#ffd9d9; border-color:#ff6b6b; }
+  .opt.disabled { pointer-events:none; opacity:.6; }
+  .opt.disabled.correct, .opt.disabled.wrong { opacity:1; }
+  .feedback { margin-top:10px; padding:12px 14px; border-radius:12px; font-size:14px; line-height:1.4; display:none; }
+  .feedback.show { display:block; }
+  .feedback.ok { background:#d6f5df; color:#1a6b34; }
+  .feedback.bad { background:#ffe3e3; color:#a12a2a; }
+  .nextbtn { display:none; width:100%; padding:15px; border:none; border-radius:14px; background:#16407f;
+    color:#fff; font-size:17px; font-weight:700; margin-top:14px; }
+  .nextbtn.show { display:block; }
+  .start-btn, .restart-btn { width:100%; padding:16px; border:none; border-radius:14px; background:#4cd97b;
+    color:#123322; font-size:18px; font-weight:800; margin-top:10px; }
+  .center { text-align:center; }
+  .emoji-big { font-size:48px; margin-bottom:8px; }
+  .score-num { font-size:46px; font-weight:800; color:#16407f; margin:6px 0; }
+  .score-msg { font-size:15px; color:#5a6a8a; margin-bottom:6px; }
+  .hidden { display:none; }
+  ul.review { text-align:left; padding-left:18px; font-size:14px; color:#3a4a6a; }
+  ul.review li { margin-bottom:8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧬 Repaso Capitulo 1 - v2</h1>
+  <div class="subtitle">Characteristics & classification of living organisms</div>
+
+  <div class="card center" id="screen-start">
+    <div class="emoji-big">🌱</div>
+    <div class="q-text" style="text-align:center;">12 preguntas nuevas, distintas a la primera version.</div>
+    <button class="start-btn" onclick="startQuiz()">Empezar</button>
+  </div>
+
+  <div class="progress-bar hidden" id="progress-wrap">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+
+  <div class="card hidden" id="screen-quiz">
+    <div class="q-label" id="q-counter">Pregunta 1 de 12</div>
+    <div class="q-text" id="q-text"></div>
+    <div id="q-options"></div>
+    <div class="feedback" id="q-feedback"></div>
+    <button class="nextbtn" id="next-btn" onclick="nextQuestion()">Siguiente →</button>
+  </div>
+
+  <div class="card center hidden" id="screen-end">
+    <div class="emoji-big" id="end-emoji">🎉</div>
+    <div class="score-msg">Tu puntaje</div>
+    <div class="score-num"><span id="final-score">0</span>/12</div>
+    <div class="score-msg" id="end-msg"></div>
+    <div id="review-wrap" style="text-align:left; margin-top:14px;"></div>
+    <button class="restart-btn" onclick="location.reload()">Repetir</button>
+  </div>
+</div>
+
+<script>
+let score = 0;
+let missed = [];
+
+const questions = [
+  { q:"¿Cual de estas SI es una de las 7 caracteristicas de los seres vivos?",
+    opts:["Fotosintesis","Sensibilidad","Digestion","Circulacion"], correct:1,
+    explain:"Las 7 son: movimiento, respiracion, sensibilidad, crecimiento, reproduccion, excrecion y nutricion." },
+  { q:"La clasificacion biologica agrupa organismos segun...",
+    opts:["Su tamaño","Su color","Caracteristicas que comparten","Donde viven"], correct:2,
+    explain:"Se agrupan segun caracteristicas compartidas, que reflejan relaciones evolutivas." },
+  { q:"Los sistemas de clasificacion reflejan...",
+    opts:["El orden alfabetico","Relaciones evolutivas entre organismos","El tamaño de las poblaciones","La edad de las especies"], correct:1,
+    explain:"La clasificacion refleja que tan emparentados estan los organismos evolutivamente." },
+  { q:'En el nombre cientifico "Panthera leo", ¿cual palabra es el genero?',
+    opts:["leo","Panthera","Ambas","Ninguna"], correct:1,
+    explain:"Panthera es el genero (mayuscula); leo es la especie (minuscula)." },
+  { q:"¿Que tipo de descripciones NO deben usarse en una clave dicotomica?",
+    opts:['Comparativas o subjetivas, como "grande" o "mas alto"',"Descripciones claras y objetivas","Numero de patas","Color"], correct:0,
+    explain:"Deben evitarse descripciones comparativas o subjetivas — la persona solo ve un organismo a la vez." },
+  { q:"Las celulas del reino animal, a diferencia de las del reino vegetal...",
+    opts:["No tienen nucleo","No tienen pared celular de celulosa","No tienen citoplasma","No se dividen"], correct:1,
+    explain:"Las celulas vegetales tienen pared de celulosa (y a veces cloroplastos); las animales no." },
+  { q:"¿Cuantos grupos principales de vertebrados existen?",
+    opts:["3","4","5","6"], correct:2,
+    explain:"5 grupos: peces, anfibios, reptiles, aves y mamiferos." },
+  { q:"Los artropodos incluyen a...",
+    opts:["Peces, aves y mamiferos","Insectos, aracnidos, crustaceos y miriapodos","Reptiles y anfibios","Solo insectos"], correct:1,
+    explain:"Artropodos = insectos, aracnidos, crustaceos y miriapodos." },
+  { q:"¿Que diferencia a los insectos de los aracnidos dentro de los artropodos?",
+    opts:["El tamaño","El color","El numero de patas y antenas","Si vuelan o no"], correct:2,
+    explain:"Los grupos de artropodos se distinguen por numero de patas y antenas." },
+  { q:"Ademas de animal y planta, ¿cuales son los otros 3 reinos?",
+    opts:["Hongos, procariotas y protoctistas","Virus, bacterias y algas","Peces, insectos y aves","Musgos, helechos y algas"], correct:0,
+    explain:"Los 5 reinos son: animal, plantas, hongos, procariotas y protoctistas." },
+  { q:"Las plantas con flores se dividen en dos grupos segun...",
+    opts:["Si son grandes o chicas","Si son verdes o de colores","Si son monocotiledoneas o dicotiledoneas","Donde crecen"], correct:2,
+    explain:"Flowering plants = monocotiledoneas o dicotiledoneas, segun venas, raiz, flor y haces vasculares." },
+  { q:"¿Por que los virus no cumplen las 7 caracteristicas de los seres vivos?",
+    opts:["Porque son planos","Porque no se ven a simple vista","Porque no tienen celulas","Porque solo existen en laboratorios"], correct:2,
+    explain:"Los virus no tienen celulas: son material genetico rodeado de una capa de proteina." }
+];
+
+let currentQ = 0;
+let answered = false;
+
+function startQuiz() {
+  document.getElementById('screen-start').classList.add('hidden');
+  document.getElementById('progress-wrap').classList.remove('hidden');
+  document.getElementById('screen-quiz').classList.remove('hidden');
+  showQuestion();
+}
+
+function updateProgress() {
+  const pct = (currentQ / questions.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function showQuestion() {
+  answered = false;
+  const item = questions[currentQ];
+  document.getElementById('q-counter').textContent = `Pregunta ${currentQ + 1} de ${questions.length}`;
+  document.getElementById('q-text').textContent = item.q;
+  const optsWrap = document.getElementById('q-options');
+  optsWrap.innerHTML = '';
+  item.opts.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.textContent = opt;
+    b.onclick = () => selectAnswer(i);
+    optsWrap.appendChild(b);
+  });
+  document.getElementById('q-feedback').className = 'feedback';
+  document.getElementById('q-feedback').textContent = '';
+  document.getElementById('next-btn').classList.remove('show');
+  updateProgress();
+}
+
+function selectAnswer(i) {
+  if (answered) return;
+  answered = true;
+  const item = questions[currentQ];
+  const opts = document.querySelectorAll('.opt');
+  opts.forEach((o, idx) => {
+    o.classList.add('disabled');
+    if (idx === item.correct) o.classList.add('correct');
+    if (idx === i && i !== item.correct) o.classList.add('wrong');
+  });
+  const fb = document.getElementById('q-feedback');
+  if (i === item.correct) {
+    score++;
+    fb.className = 'feedback show ok';
+    fb.textContent = '✓ Correcto — ' + item.explain;
+  } else {
+    fb.className = 'feedback show bad';
+    fb.textContent = '✗ ' + item.explain;
+    missed.push(item.q + " → " + item.opts[item.correct]);
+  }
+  document.getElementById('next-btn').classList.add('show');
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ < questions.length) {
+    showQuestion();
+  } else {
+    finishQuiz();
+  }
+}
+
+function finishQuiz() {
+  document.getElementById('screen-quiz').classList.add('hidden');
+  document.getElementById('progress-wrap').classList.add('hidden');
+  document.getElementById('screen-end').classList.remove('hidden');
+  document.getElementById('final-score').textContent = score;
+
+  const pct = score / questions.length;
+  const emoji = document.getElementById('end-emoji');
+  const msg = document.getElementById('end-msg');
+  if (pct >= 0.85) { emoji.textContent = '🏆'; msg.textContent = 'Excelente, domina el capitulo 1.'; }
+  else if (pct >= 0.6) { emoji.textContent = '👍'; msg.textContent = 'Bien, con algunos puntos para repasar.'; }
+  else { emoji.textContent = '📖'; msg.textContent = 'Conviene repasar el capitulo 1 de nuevo.'; }
+
+  if (missed.length > 0) {
+    const wrap = document.getElementById('review-wrap');
+    wrap.innerHTML = '<div class="q-label">Para repasar</div><ul class="review">' +
+      missed.map(m => `<li>${m}</li>`).join('') + '</ul>';
+  }
+}
+</script>
+</body>
+</html>
